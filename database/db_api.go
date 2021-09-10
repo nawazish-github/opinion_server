@@ -8,23 +8,8 @@ import (
 )
 
 func SaveOpinion(opinion model.Opinion) error {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		Host, Port, User, Password, DBname)
-
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		panic(err)
-	}
+	db := connect()
 	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("Successfully connected to DB!")
-
 	insertOpinion := `insert into opinion (qid, oid, ip_addr) values ($1, $2, $3)`
 	res, err := db.Exec(insertOpinion, opinion.QID, opinion.OptionID, opinion.IPAddress)
 	if err != nil {
@@ -33,4 +18,23 @@ func SaveOpinion(opinion model.Opinion) error {
 	}
 	fmt.Println("successfully saved opinion in DB ", res)
 	return nil
+}
+
+func connect() *sql.DB {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		Host, Port, User, Password, DBname)
+
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+
+	err = db.Ping()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Successfully connected to DB!")
+	return db
 }
