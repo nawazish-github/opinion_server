@@ -17,12 +17,18 @@ func ReceiveOpinion(c *gin.Context) {
 		return
 	}
 	fmt.Printf("successfully received opinion: %v", opinion)
-	ipAddr := getIPAddress(c)
-	opinion.IPAddress = ipAddr
-	database.SaveOpinion(opinion)
+
+	poplOpinion := populateIPAddress(c, opinion)
+	database.SaveOpinion(poplOpinion)
 	io.Response(c)
 }
 
-func getIPAddress (c *gin.Context) string {
+func getIPAddress(c *gin.Context) string {
 	return c.ClientIP()
+}
+
+func populateIPAddress(c *gin.Context, opinion model.Opinion) model.Opinion {
+	ipAddr := getIPAddress(c)
+	opinion.IPAddress = ipAddr
+	return opinion
 }
