@@ -6,6 +6,7 @@ import (
 	"github.com/nawazish-github/opinion_server/database"
 	"github.com/nawazish-github/opinion_server/io"
 	"github.com/nawazish-github/opinion_server/model"
+	"net/http"
 )
 
 func ReceiveOpinion(c *gin.Context) {
@@ -13,7 +14,7 @@ func ReceiveOpinion(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&opinion); err != nil {
 		fmt.Printf("Invalid opinion received: %v \n", err)
-		io.ErrResponse(c, err)
+		io.ErrResponse(c, http.StatusBadRequest, err)
 		return
 	}
 	fmt.Printf("successfully received opinion: %v", opinion)

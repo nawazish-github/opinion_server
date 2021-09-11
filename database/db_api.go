@@ -3,8 +3,11 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"github.com/nawazish-github/opinion_server/io"
 	"github.com/nawazish-github/opinion_server/model"
+	"net/http"
 )
 
 func SaveOpinion(opinion model.Opinion) error {
@@ -18,6 +21,63 @@ func SaveOpinion(opinion model.Opinion) error {
 	}
 	fmt.Println("successfully saved opinion in DB ", res)
 	return nil
+}
+
+func GetQuestion(c *gin.Context) (model.QuestionAndOptions, error) {
+	db := connect()
+	defer db.Close()
+
+	getQuestion := `select q.qid, q.question_prompt, o.oid, o.option_prompt from question q inner join option o on  q.qid = o.qid where q.date = $1`
+
+	res, err := db.Query(getQuestion, `some date`)
+
+	if err != nil {
+		fmt.Println("Failed to fetch question for the day [which day] from DB: ", err)
+		io.ErrResponse(c, http.StatusInternalServerError, err)
+		return model.QuestionAndOptions{}, err
+	}
+
+	r, err := parseRows(res)
+	fmt.Println("successfully fetched question: ", r)
+	return r, nil
+}
+
+func parseRows(res *sql.Rows) (model.QuestionAndOptions, error) {
+	m := make(map[string]model.QuestionAndOptions)
+	defer res.Close()
+	var qid, qPrompt, oid, oPrompt string
+	for ; res.Next(); {
+
+		err := res.Scan(&qid, &qPrompt, &oid, &oPrompt)
+		if err != nil {
+			fmt.Errorf("Error while fetching question for the day: %v", err)
+			return model.QuestionAndOptions{}, err
+		}
+
+		v, exist := m[qid]
+
+		//smelly code begins from here
+		if exist {
+			option := model.Option{
+				OID:          oid,
+				OptionPrompt: oPrompt,
+			}
+			v.Options = append(v.Options, option)
+			m[qid] = v
+		} else {
+			var resp model.QuestionAndOptions
+			option := model.Option{
+				OID:          oid,
+				OptionPrompt: oPrompt,
+			}
+			resp.Question.QID = qid
+			resp.Question.QuestionPrompt = qPrompt
+			resp.Options = append(resp.Options, option)
+			m[qid] = resp
+		}
+		//smelly code ends here
+	}
+	return m[qid], nil
 }
 
 func connect() *sql.DB {
