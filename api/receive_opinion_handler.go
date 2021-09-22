@@ -10,6 +10,7 @@ import (
 )
 
 func ReceiveOpinion(c *gin.Context) {
+	fmt.Println("/opinion endpoint called to receive opinion")
 	var opinion model.Opinion
 
 	if err := c.ShouldBindJSON(&opinion); err != nil {
@@ -17,19 +18,13 @@ func ReceiveOpinion(c *gin.Context) {
 		io.ErrResponse(c, http.StatusBadRequest, err)
 		return
 	}
-	fmt.Printf("successfully received opinion: %v", opinion)
+	fmt.Printf("Successfully received opinion")
 
-	poplOpinion := populateIPAddress(c, opinion)
-	database.SaveOpinion(poplOpinion)
+	ipAddr := getIPAddress(c)
+	database.SaveOpinion(opinion, ipAddr)
 	io.Response(c)
 }
 
 func getIPAddress(c *gin.Context) string {
 	return c.ClientIP()
-}
-
-func populateIPAddress(c *gin.Context, opinion model.Opinion) model.Opinion {
-	ipAddr := getIPAddress(c)
-	opinion.IPAddress = ipAddr
-	return opinion
 }

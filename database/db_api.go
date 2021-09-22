@@ -10,11 +10,11 @@ import (
 	"net/http"
 )
 
-func SaveOpinion(opinion model.Opinion) error {
+func SaveOpinion(opinion model.Opinion, ipAddr string) error {
 	db := connect()
 	defer db.Close()
-	insertOpinion := `insert into opinion (qid, oid, ip_addr) values ($1, $2, $3)`
-	res, err := db.Exec(insertOpinion, opinion.QID, opinion.OptionID, opinion.IPAddress)
+	insertOpinion := `insert into opinion (qid, oid, ip_addr, date_time) values ($1, $2, $3, $4)`
+	res, err := db.Exec(insertOpinion, opinion.QID, opinion.OptionID, ipAddr, opinion.DateTime)
 	if err != nil {
 		fmt.Println("Failed to save opinion in DB")
 		panic(err)
@@ -23,13 +23,13 @@ func SaveOpinion(opinion model.Opinion) error {
 	return nil
 }
 
-func GetQuestion(c *gin.Context) (model.QuestionAndOptions, error) {
+func GetQuestion(c *gin.Context, date string) (model.QuestionAndOptions, error) {
 	db := connect()
 	defer db.Close()
 
-	getQuestion := `select q.qid, q.question_prompt, o.oid, o.option_prompt from question q inner join option o on  q.qid = o.qid where q.date = $1`
+	getQuestion := `select q.id, q.question_prompt, o.id, o.option_prompt from question q inner join option o on  q.id = o.qid where q.date = $1`
 
-	res, err := db.Query(getQuestion, `some date`)
+	res, err := db.Query(getQuestion, date)
 
 	if err != nil {
 		fmt.Println("Failed to fetch question for the day [which day] from DB: ", err)

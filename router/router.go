@@ -9,7 +9,8 @@ import (
 func InitRoutes() {
 	router := gin.Default()
 	router.POST("/opinion", api.ReceiveOpinion)
-	router.GET("/question", api.GetQuestion)
+	router.OPTIONS("/opinion", api.HandleCORS)
+	router.GET("/question/:date", api.GetQuestion)
 	fmt.Println("server started on 8080")
 	router.Run("localhost:8080")
 }
